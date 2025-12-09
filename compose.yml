@@ -1,0 +1,37 @@
+services:
+  sds011:
+    build: .
+    container_name: sds011-forwarder
+    restart: always
+
+    # Environment variables loaded from .env
+    env_file: .env
+
+    # USB sensor passthrough
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+
+    privileged: true
+
+    # Logging volume
+    volumes:
+      - logs:/app/logs
+
+    # Network where TB Gateway MQTT broker lives
+    networks:
+      - tbgw
+
+    # Improved healthcheck: ensures telemetry is being sent
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'Telemetry sent' /app/logs/sds011.log || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+networks:
+  tbgw:
+    external: true
+
+volumes:
+  logs:
